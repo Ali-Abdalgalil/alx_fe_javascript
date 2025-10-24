@@ -10,23 +10,19 @@
 <body>
     <h1>Dynamic Quote Generator</h1>
 
-    <!-- ✅ القائمة المنسدلة لاختيار الكاتيجوري -->
-    <select id="categoryFilter" onchange="filterQuotes()">
+    <!-- Dropdown للفلترة -->
+    <select id="categoryFilter" onchange="filterQuote()">
         <option value="all">All Categories</option>
     </select>
 
-    <!-- مكان عرض الكوت -->
+    <!-- مكان عرض الاقتباس -->
     <div id="quoteDisplay"></div>
 
-    <!-- زر عرض كوت جديدة -->
+    <!-- زر لعرض اقتباس جديد -->
     <button id="newQuote">Show New Quote</button>
 
-    <!-- نموذج إضافة كوت جديدة -->
-    <div id="formContainer">
-        <input type="text" id="newQuoteText" placeholder="Enter a new quote" />
-        <input type="text" id="newQuoteCategory" placeholder="Enter quote category" />
-        <button onclick="addQuote()">Add Quote</button>
-    </div>
+    <!-- حاوية الفورم -->
+    <div id="formContainer"></div>
 
     <!-- أزرار التصدير والاستيراد -->
     <button id="exportQuotesButton" onclick="exportToJsonFile()">Export Quotes</button>
