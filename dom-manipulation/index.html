@@ -10,6 +10,11 @@
 <body>
     <h1>Dynamic Quote Generator</h1>
 
+    <!-- ✅ القائمة المنسدلة لاختيار الكاتيجوري -->
+    <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+    </select>
+
     <!-- مكان عرض الكوت -->
     <div id="quoteDisplay"></div>
 
@@ -23,10 +28,8 @@
         <button onclick="addQuote()">Add Quote</button>
     </div>
 
-    <!-- ✅ زر لتصدير الكوتس -->
+    <!-- أزرار التصدير والاستيراد -->
     <button id="exportQuotesButton" onclick="exportToJsonFile()">Export Quotes</button>
-
-    <!-- ✅ إدخال ملف لاستيراد الكوتس -->
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
 
     <script src="script.js"></script>
