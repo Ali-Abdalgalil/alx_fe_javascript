@@ -2,19 +2,32 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dynamic Quote Generator</title>
 </head>
 
 <body>
     <h1>Dynamic Quote Generator</h1>
 
+    <!-- مكان عرض الكوت -->
     <div id="quoteDisplay"></div>
+
+    <!-- زر عرض كوت جديدة -->
     <button id="newQuote">Show New Quote</button>
 
-    <!-- هنسيب مكان الفورم -->
-    <div id="formContainer"></div>
+    <!-- نموذج إضافة كوت جديدة -->
+    <div id="formContainer">
+        <input type="text" id="newQuoteText" placeholder="Enter a new quote" />
+        <input type="text" id="newQuoteCategory" placeholder="Enter quote category" />
+        <button onclick="addQuote()">Add Quote</button>
+    </div>
+
+    <!-- ✅ زر لتصدير الكوتس -->
+    <button id="exportQuotesButton" onclick="exportToJsonFile()">Export Quotes</button>
+
+    <!-- ✅ إدخال ملف لاستيراد الكوتس -->
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
 
     <script src="script.js"></script>
 </body>
