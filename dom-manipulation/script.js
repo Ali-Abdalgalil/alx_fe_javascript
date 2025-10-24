@@ -1,95 +1,79 @@
-// تحميل الاقتباسات من localStorage أو تعيين افتراضي
+// تحميل البيانات من localStorage أو تعيين افتراضي
 let quotes = JSON.parse(localStorage.getItem("quotes")) || [
     { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
     { text: "Don’t let yesterday take up too much of today.", category: "Inspiration" },
     { text: "It’s not whether you get knocked down, it’s whether you get up.", category: "Perseverance" }
 ];
 
-// حفظ الاقتباسات في localStorage
 function saveQuotes() {
     localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-// عرض اقتباس عشوائي اعتمادًا على الفلتر المختار
+// عرض اقتباس عشوائي
 function showRandomQuote() {
     const select = document.getElementById("categoryFilter");
-    const selectedCategory = select ? select.value : (localStorage.getItem("selectedCategory") || "all");
+    const selected = select ? select.value : "all";
 
-    const filtered = selectedCategory === "all"
+    const filtered = selected === "all"
         ? quotes
-        : quotes.filter(q => q.category === selectedCategory);
+        : quotes.filter(q => q.category === selected);
 
-    if (!filtered || filtered.length === 0) {
-        document.getElementById("quoteDisplay").innerHTML = "<p>No quotes in this category yet.</p>";
+    if (filtered.length === 0) {
+        document.getElementById("quoteDisplay").innerHTML = "<p>No quotes found.</p>";
         return;
     }
 
-    const idx = Math.floor(Math.random() * filtered.length);
-    const q = filtered[idx];
-
+    const q = filtered[Math.floor(Math.random() * filtered.length)];
     document.getElementById("quoteDisplay").innerHTML = `
     <p>${q.text}</p>
     <p><em>${q.category}</em></p>
   `;
-
-    // حفظ آخر اقتباس في الجلسة (اختياري)
-    sessionStorage.setItem("lastViewedQuote", JSON.stringify(q));
 }
 
-// إنشاء نموذج إضافة اقتباس ديناميكيًا باستخدام appendChild (مهم للفاحص)
+// إنشاء فورم إضافة اقتباس
 function createAddQuoteForm() {
     const container = document.getElementById("formContainer");
-    container.innerHTML = ""; // نظف الحاوية أولًا
+    container.innerHTML = "";
 
     const inputText = document.createElement("input");
-    inputText.type = "text";
     inputText.id = "newQuoteText";
     inputText.placeholder = "Enter a new quote";
 
     const inputCategory = document.createElement("input");
-    inputCategory.type = "text";
     inputCategory.id = "newQuoteCategory";
     inputCategory.placeholder = "Enter quote category";
 
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.textContent = "Add Quote";
-    addBtn.addEventListener("click", addQuote);
+    const btn = document.createElement("button");
+    btn.textContent = "Add Quote";
+    btn.addEventListener("click", addQuote);
 
-    // نضيف العناصر باستخدام appendChild ليطابق المطلوب
     container.appendChild(inputText);
     container.appendChild(inputCategory);
-    container.appendChild(addBtn);
+    container.appendChild(btn);
 }
 
-// إضافة اقتباس جديد، وتحديث اللائحة والـ localStorage والـ dropdown
+// إضافة اقتباس جديد
 function addQuote() {
-    const textEl = document.getElementById("newQuoteText");
-    const catEl = document.getElementById("newQuoteCategory");
-    const text = textEl ? textEl.value.trim() : "";
-    const category = catEl ? catEl.value.trim() : "";
+    const text = document.getElementById("newQuoteText").value.trim();
+    const category = document.getElementById("newQuoteCategory").value.trim();
 
     if (!text || !category) {
-        alert("Please fill in both fields!");
+        alert("Please fill both fields");
         return;
     }
 
     quotes.push({ text, category });
     saveQuotes();
-
-    // لو الفئة جديدة، نعيد تعبئة قائمة الفئات
     populateCategories();
-
-    // نظف الحقول واعرض اقتباس
-    if (textEl) textEl.value = "";
-    if (catEl) catEl.value = "";
     showRandomQuote();
+
+    // تزامن التغيير مع السيرفر
+    syncWithServer(true);
 }
 
-// تصدير الاقتباسات كملف JSON
+// تصدير كملف JSON
 function exportToJsonFile() {
-    const dataStr = JSON.stringify(quotes, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -98,101 +82,116 @@ function exportToJsonFile() {
     URL.revokeObjectURL(url);
 }
 
-// استيراد الاقتباسات من ملف JSON
+// استيراد من JSON
 function importFromJsonFile(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (!Array.isArray(imported)) {
-                alert("Invalid JSON format: expected an array of quotes.");
-                return;
-            }
-            // دمج العناصر المستوردة
-            quotes.push(...imported);
-            saveQuotes();
-            populateCategories();
-            alert("Quotes imported successfully!");
-        } catch (err) {
-            alert("Error parsing JSON file.");
-            console.error(err);
-        }
+    reader.onload = e => {
+        const imported = JSON.parse(e.target.result);
+        quotes.push(...imported);
+        saveQuotes();
+        populateCategories();
+        alert("Quotes imported successfully!");
     };
     reader.readAsText(file);
 }
 
-// تعبئة قائمة الفئات ديناميكيًا باستخدام appendChild
+// تعبئة الفئات
 function populateCategories() {
     const select = document.getElementById("categoryFilter");
-    // نحصل على الفئات الفريدة
     const categories = Array.from(new Set(quotes.map(q => q.category)));
-    // احفظ الاختيار السابق
-    const saved = localStorage.getItem("selectedCategory") || "all";
 
-    // نظف الخيارات الحالية
     while (select.firstChild) select.removeChild(select.firstChild);
 
-    // خيار "All Categories"
-    const optAll = document.createElement("option");
-    optAll.value = "all";
-    optAll.textContent = "All Categories";
-    select.appendChild(optAll);
+    const allOpt = document.createElement("option");
+    allOpt.value = "all";
+    allOpt.textContent = "All Categories";
+    select.appendChild(allOpt);
 
-    // أضف الفئات باستخدام appendChild (هنا الفاحص يبحث عن appendChild)
-    categories.forEach(cat => {
+    categories.forEach(c => {
         const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
+        opt.value = c;
+        opt.textContent = c;
         select.appendChild(opt);
     });
 
-    // استعادة الاختيار المحفوظ لو موجود
-    if (categories.includes(saved) || saved === "all") {
-        select.value = saved;
-    } else {
-        select.value = "all";
-        localStorage.setItem("selectedCategory", "all");
-    }
+    select.value = localStorage.getItem("selectedCategory") || "all";
 }
 
-// دالة الفلترة المطلوبة باسم filterQuote (المفرد)
+// الفلترة
 function filterQuote() {
     const select = document.getElementById("categoryFilter");
-    const selected = select ? select.value : "all";
-    // احفظ الاختيار في localStorage
-    localStorage.setItem("selectedCategory", selected);
-    // حدث العرض حسب الفلتر
+    const val = select.value;
+    localStorage.setItem("selectedCategory", val);
     showRandomQuote();
 }
 
-// إضافات لربط الأزرار والأحداث عند تحميل الصفحة
-window.addEventListener("load", () => {
-    // إنشاء الفورم ديناميكيًا
-    createAddQuoteForm();
+// ==================== 🛰️ تزامن البيانات مع السيرفر ====================
 
-    // تعبئة الفئات ثم عرض اقتباس (سيأخذ الفلتر المحفوظ إن وجد)
-    populateCategories();
+// محاكاة جلب البيانات من "سيرفر"
+async function fetchFromServer() {
+    try {
+        const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+        const data = await res.json();
+        // نحول البيانات لصيغة الاقتباسات
+        return data.map(p => ({
+            text: p.title,
+            category: "Server"
+        }));
+    } catch (err) {
+        console.error("Fetch error:", err);
+        return [];
+    }
+}
 
-    // عرض آخر اقتباس محفوظ في sessionStorage إن وُجد
-    const last = sessionStorage.getItem("lastViewedQuote");
-    if (last) {
-        try {
-            const q = JSON.parse(last);
-            document.getElementById("quoteDisplay").innerHTML = `
-        <p>${q.text}</p>
-        <p><em>${q.category}</em></p>
-      `;
-        } catch (err) {
-            showRandomQuote();
-        }
-    } else {
-        showRandomQuote();
+// حفظ حالة التزامن
+function showSyncStatus(msg, color = "green") {
+    const status = document.getElementById("syncStatus");
+    status.style.color = color;
+    status.textContent = msg;
+    setTimeout(() => (status.textContent = ""), 4000);
+}
+
+// دالة التزامن الفعلي
+async function syncWithServer(addedLocally = false) {
+    const serverQuotes = await fetchFromServer();
+
+    let updated = false;
+
+    // فحص التعارض (Conflict)
+    const localTexts = quotes.map(q => q.text);
+    const newFromServer = serverQuotes.filter(q => !localTexts.includes(q.text));
+
+    if (newFromServer.length > 0) {
+        quotes.push(...newFromServer);
+        saveQuotes();
+        updated = true;
+        showSyncStatus("New quotes fetched from server.");
     }
 
-    // ربط زر Show New Quote
-    const newBtn = document.getElementById("newQuote");
-    if (newBtn) newBtn.addEventListener("click", showRandomQuote);
+    if (addedLocally) {
+        showSyncStatus("Local quote added and synced to server (simulated).");
+    }
+
+    if (!updated && !addedLocally) {
+        showSyncStatus("Data is up-to-date.");
+    }
+
+    populateCategories();
+}
+
+// تكرار المزامنة كل 30 ثانية
+setInterval(syncWithServer, 30000);
+
+// ============================================================
+
+// عند تحميل الصفحة
+window.addEventListener("load", () => {
+    createAddQuoteForm();
+    populateCategories();
+    showRandomQuote();
+    syncWithServer();
+    document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 });
