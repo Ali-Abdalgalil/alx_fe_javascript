@@ -2,28 +2,60 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dynamic Quote Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #quote-box {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            margin: 8px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #syncStatus {
+            margin-top: 12px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Dynamic Quote Generator</h1>
+    <h1>Dynamic Quote Generator 💬</h1>
 
-    <select id="categoryFilter" onchange="filterQuote()">
-        <option value="all">All Categories</option>
-    </select>
+    <div id="quote-box">
+        <p id="quote">Loading quote...</p>
+        <p id="author"></p>
+    </div>
 
-    <div id="quoteDisplay"></div>
-    <button id="newQuote">Show New Quote</button>
+    <button id="newQuoteBtn">New Quote</button>
+    <button id="addQuoteBtn">Add My Quote</button>
+    <button id="syncBtn">Sync with Server 🔄</button>
 
-    <div id="formContainer"></div>
-
-    <button id="exportQuotesButton" onclick="exportToJsonFile()">Export Quotes</button>
-    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
-
-    <!-- إشعار بسيط يظهر عند التحديث -->
-    <p id="syncStatus" style="color: green;"></p>
+    <p id="syncStatus"></p>
 
     <script src="script.js"></script>
 </body>
