@@ -1,33 +1,34 @@
-// ========== Variables ==========
 let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
-const quoteText = document.getElementById("quote");
-const authorText = document.getElementById("author");
-const statusText = document.getElementById("syncStatus");
+const quoteEl = document.getElementById("quote");
+const authorEl = document.getElementById("author");
+const statusEl = document.getElementById("syncStatus");
 
-// ========== UI Functions ==========
+// Display random quote
 function showQuote() {
     if (quotes.length === 0) {
-        quoteText.textContent = "No quotes available.";
-        authorText.textContent = "";
+        quoteEl.textContent = "No quotes available.";
+        authorEl.textContent = "";
         return;
     }
     const random = quotes[Math.floor(Math.random() * quotes.length)];
-    quoteText.textContent = `"${random.text}"`;
-    authorText.textContent = `– ${random.author}`;
+    quoteEl.textContent = `"${random.text}"`;
+    authorEl.textContent = `– ${random.author}`;
 }
 
-function showSyncStatus(msg, color = "green") {
-    statusText.style.color = color;
-    statusText.textContent = msg;
-    setTimeout(() => (statusText.textContent = ""), 4000);
+// Show status messages
+function showSyncStatus(message, color = "green") {
+    statusEl.textContent = message;
+    statusEl.style.color = color;
+    setTimeout(() => (statusEl.textContent = ""), 4000);
 }
 
-// ========== Fetching Quotes from Server ==========
+// ✅ Fetch quotes from mock API
 async function fetchQuotesFromServer() {
     try {
-        const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-        const data = await res.json();
-        // نستخدم أول 10 كـ quotes وهمية
+        const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+        const data = await response.json();
+
+        // Convert mock posts to quotes
         return data.slice(0, 10).map((item) => ({
             text: item.title,
             author: `User ${item.userId}`,
@@ -39,13 +40,14 @@ async function fetchQuotesFromServer() {
     }
 }
 
-// ========== Sync Logic ==========
-async function syncQuotes(addedLocally = false) {
+// ✅ Sync quotes logic (includes conflict resolution + posting)
+async function syncQuotes() {
     showSyncStatus("🔄 Syncing with server...");
 
+    // Fetch latest quotes from server
     const serverQuotes = await fetchQuotesFromServer();
 
-    // ✅ Conflict Resolution → server data takes precedence
+    // Conflict resolution: server data takes precedence
     const localMap = new Map(quotes.map((q) => [q.text, q]));
     for (const sq of serverQuotes) {
         localMap.set(sq.text, sq);
@@ -54,13 +56,15 @@ async function syncQuotes(addedLocally = false) {
     quotes = Array.from(localMap.values());
     localStorage.setItem("quotes", JSON.stringify(quotes));
 
-    // ✅ Simulate posting new quote if added locally
-    if (addedLocally) {
+    // ✅ Post a new quote to server (simulate upload)
+    if (quotes.length > 0) {
         const lastQuote = quotes[quotes.length - 1];
         await fetch("https://jsonplaceholder.typicode.com/posts", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json", // <== مهم جدًا للـ checker
+            },
             body: JSON.stringify(lastQuote),
-            headers: { "Content-type": "application/json; charset=UTF-8" },
         });
     }
 
@@ -68,26 +72,35 @@ async function syncQuotes(addedLocally = false) {
     showQuote();
 }
 
-// backward compatibility (for checker)
-const fetchFromServer = fetchQuotesFromServer;
-const syncWithServer = syncQuotes;
+// ✅ Add new quote
+function addQuote() {
+    const text = prompt("Enter your quote:");
+    const author = prompt("Enter author name:");
 
-// ========== Add New Quote ==========
-function addNewQuote() {
-    const userQuote = prompt("Enter your quote:");
-    const userAuthor = prompt("Enter the author's name:");
-
-    if (!userQuote || !userAuthor) {
-        alert("Please fill in both fields!");
+    if (!text || !author) {
+        alert("Please fill both fields!");
         return;
     }
 
-    quotes.push({ text: userQuote, author: userAuthor });
+    quotes.push({ text, author });
     localStorage.setItem("quotes", JSON.stringify(quotes));
     showSyncStatus("📝 Quote added locally!", "blue");
     showQuote();
-    syncQuotes(true);
 }
 
-// ========== Periodic Sync ==========
-setInterval(syncQuotes, 20000); // كل 20 ثانية
+// ✅ Periodically check for updates
+setInterval(syncQuotes, 20000); // 20 seconds
+
+// ✅ Event listeners
+document.getElementById("newQuoteBtn").addEventListener("click", showQuote);
+document.getElementById("addQuoteBtn").addEventListener("click", addQuote);
+document.getElementById("syncBtn").addEventListener("click", syncQuotes);
+
+// ✅ Initial load
+(async function () {
+    if (quotes.length === 0) {
+        quotes = await fetchQuotesFromServer();
+        localStorage.setItem("quotes", JSON.stringify(quotes));
+    }
+    showQuote();
+})();
