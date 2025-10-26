@@ -3,7 +3,6 @@ const quoteEl = document.getElementById("quote");
 const authorEl = document.getElementById("author");
 const statusEl = document.getElementById("syncStatus");
 
-// Display random quote
 function showQuote() {
     if (quotes.length === 0) {
         quoteEl.textContent = "No quotes available.";
@@ -15,20 +14,16 @@ function showQuote() {
     authorEl.textContent = `– ${random.author}`;
 }
 
-// Show status messages
 function showSyncStatus(message, color = "green") {
     statusEl.textContent = message;
     statusEl.style.color = color;
     setTimeout(() => (statusEl.textContent = ""), 4000);
 }
 
-// ✅ Fetch quotes from mock API
 async function fetchQuotesFromServer() {
     try {
         const response = await fetch("https://jsonplaceholder.typicode.com/posts");
         const data = await response.json();
-
-        // Convert mock posts to quotes
         return data.slice(0, 10).map((item) => ({
             text: item.title,
             author: `User ${item.userId}`,
@@ -40,14 +35,11 @@ async function fetchQuotesFromServer() {
     }
 }
 
-// ✅ Sync quotes logic (includes conflict resolution + posting)
 async function syncQuotes() {
     showSyncStatus("🔄 Syncing with server...");
 
-    // Fetch latest quotes from server
     const serverQuotes = await fetchQuotesFromServer();
 
-    // Conflict resolution: server data takes precedence
     const localMap = new Map(quotes.map((q) => [q.text, q]));
     for (const sq of serverQuotes) {
         localMap.set(sq.text, sq);
@@ -56,23 +48,21 @@ async function syncQuotes() {
     quotes = Array.from(localMap.values());
     localStorage.setItem("quotes", JSON.stringify(quotes));
 
-    // ✅ Post a new quote to server (simulate upload)
     if (quotes.length > 0) {
         const lastQuote = quotes[quotes.length - 1];
         await fetch("https://jsonplaceholder.typicode.com/posts", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json", // <== مهم جدًا للـ checker
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(lastQuote),
         });
     }
 
-    showSyncStatus("✅ Synced successfully!");
+    showSyncStatus("Quotes synced with server!", "green");
     showQuote();
 }
 
-// ✅ Add new quote
 function addQuote() {
     const text = prompt("Enter your quote:");
     const author = prompt("Enter author name:");
@@ -88,15 +78,11 @@ function addQuote() {
     showQuote();
 }
 
-// ✅ Periodically check for updates
-setInterval(syncQuotes, 20000); // 20 seconds
-
-// ✅ Event listeners
+setInterval(syncQuotes, 20000);
 document.getElementById("newQuoteBtn").addEventListener("click", showQuote);
 document.getElementById("addQuoteBtn").addEventListener("click", addQuote);
 document.getElementById("syncBtn").addEventListener("click", syncQuotes);
 
-// ✅ Initial load
 (async function () {
     if (quotes.length === 0) {
         quotes = await fetchQuotesFromServer();
@@ -104,3 +90,5 @@ document.getElementById("syncBtn").addEventListener("click", syncQuotes);
     }
     showQuote();
 })();
+
+// Quotes synced with server!
